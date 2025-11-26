@@ -1,0 +1,18 @@
+{
+  "name": "sabouteur",
+  "version": "1.0.0",
+  "description": "Lightweight recreation of the Saboteur board game built on Three.js with first-person exploration, hidden roles, and proximity chat.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix client",
+    "start": "npm start --prefix server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
