@@ -37,9 +37,8 @@ import { CARD_LIBRARY, rotateConnectors } from './cards';
 import { emitMovement } from '../net/client';
 import { useGameStore } from '../state/store';
 import { createBoardMesh, updateBoardMesh, boardTileFromIntersection, tileToPosition, TILE_WIDTH, TILE_HEIGHT, BOARD_COLUMNS, BOARD_ROWS } from './board';
-import { loadAvatarModel, type LoadedAvatar } from './models';
+import { loadAvatarModel } from './models';
 
-const speed = 6.2;
 const broadcastIntervalMs = 120;
 const AVATAR_GROUND_LIFT = 0.05;
 
@@ -106,7 +105,6 @@ class ThirdPersonController {
   private locomotion?: AnimationAction;
   private current?: AnimationAction;
   private flipHeld = false;
-  private swimHeld = false;
 
   private readonly moveSpeed = 3.2;
   private readonly sprintMultiplier = 1.8;
@@ -229,7 +227,6 @@ class ThirdPersonController {
     const isMoving = move.lengthSq() > 0.0001;
     const sprint = this.input.isDown('ShiftLeft', 'ShiftRight');
     const swim = this.input.isDown('KeyE');
-    this.swimHeld = swim;
 
     if (isMoving) {
       const speed = this.moveSpeed * (sprint ? this.sprintMultiplier : 1);
@@ -339,8 +336,6 @@ export class GameScene {
 
   private previewRotationSteps = 0;
 
-  private previewTexture?: CanvasTexture;
-
   private readonly mixers = new Map<
     string,
     { mixer: AnimationMixer; actions: Record<string, AnimationAction>; current?: AnimationAction }
@@ -351,8 +346,6 @@ export class GameScene {
   private pointerLockAvailable = typeof document !== 'undefined' && 'pointerLockElement' in document;
   private pointerLockFailed = false;
 
-  private susWallMesh?: Mesh;
-  private leadWallMesh?: Mesh;
   private susTexture?: CanvasTexture;
   private leadTexture?: CanvasTexture;
   private input: InputManager;
@@ -652,36 +645,6 @@ export class GameScene {
     }
   };
 
-  private toggleThirdPerson = () => {
-    this.thirdPerson = true;
-    const selfAvatar = this.ensureSelfAvatar();
-    if (this.thirdPerson && selfAvatar) {
-      if (!this.thirdController) {
-        this.thirdController = new ThirdPersonController(this.camera, this.scene, this.input);
-      }
-      this.thirdController.setModel(selfAvatar, this.baseAnimations);
-      this.thirdController.position.copy(selfAvatar.position);
-      const forward = new Vector3();
-      this.camera.getWorldDirection(forward);
-      this.thirdController.yaw = Math.atan2(forward.x, forward.z);
-      // enable pointer-lock mouse look while third-person is active
-      this.input.requestPointerLock();
-      if (this.selfId) {
-        this.mixers.delete(this.selfId);
-      }
-    } else {
-      document.exitPointerLock?.();
-      if (!this.thirdPerson && selfAvatar && this.selfId && !this.mixers.has(this.selfId)) {
-        this.setupMixer(this.selfId, selfAvatar);
-      }
-    }
-    this.avatars.forEach((avatar, id) => {
-      if (id === this.selfId) avatar.visible = this.thirdPerson;
-    });
-    // Snap camera once when toggled to avoid jitter on the next frame
-    this.updateCameraRig(0);
-  };
-
   public setPreviewSelection(card: CardInstance | undefined, rotation: number) {
     this.previewSelected = card;
     // Clamp to 0 or 180 only (0 => no flip, 2 => 180 flip)
@@ -724,8 +687,9 @@ export class GameScene {
     const rotated = rotateConnectors(connectors, this.previewRotationSteps);
     const tex = rotated ? this.buildConnectorTexture(rotated) : undefined;
     if (tex) {
-      this.previewMesh.material.map = tex;
-      this.previewMesh.material.needsUpdate = true;
+      const mat = this.previewMesh.material as MeshStandardMaterial;
+      mat.map = tex;
+      mat.needsUpdate = true;
     }
   }
 
@@ -898,11 +862,12 @@ export class GameScene {
     ctx.fillText(name, canvas.width / 2, canvas.height / 2);
     const tex = new CanvasTexture(canvas);
     tex.needsUpdate = true;
-    (label.material as MeshBasicMaterial).map = tex;
-    (label.material as MeshBasicMaterial).transparent = true;
-    (label.material as MeshBasicMaterial).depthTest = false;
-    (label.material as MeshBasicMaterial).side = DoubleSide;
-    (label.material as MeshBasicMaterial).needsUpdate = true;
+    const mat = label.material as MeshBasicMaterial;
+    mat.map = tex;
+    mat.transparent = true;
+    mat.depthTest = false;
+    mat.side = DoubleSide;
+    mat.needsUpdate = true;
   }
 
   private updateLabelPosition(id: string) {
@@ -998,8 +963,6 @@ export class GameScene {
     };
     const left = makeBoard(true);
     const right = makeBoard(false);
-    this.susWallMesh = left.plane;
-    this.leadWallMesh = right.plane;
     this.susTexture = left.tex;
     this.leadTexture = right.tex;
   }

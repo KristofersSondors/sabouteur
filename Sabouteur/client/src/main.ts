@@ -452,7 +452,6 @@ const renderLobbyList = () => {
       card.querySelector('button')?.addEventListener('click', () => {
         currentLobby = lobby;
         desiredRoom = lobby.code;
-        isHost = lobby.hostId === clientId;
         const status = introOverlay.querySelector<HTMLElement>('#status-hint');
         if (status) status.textContent = `Selected lobby ${lobby.code}. Press Start Game to enter.`;
         void startGame();
@@ -505,7 +504,6 @@ let accountCreated = !!loadAccount();
 let desiredRoom = 'default-room';
 const clearLegacyLobbies = () => localStorage.removeItem('saboteur-lobbies');
 clearLegacyLobbies();
-let isHost = false;
 
 const showGameUI = () => {
   mount.style.display = 'block';
@@ -569,7 +567,6 @@ introOverlay.querySelector<HTMLButtonElement>('#host-btn')?.addEventListener('cl
     if (lobby) {
       currentLobby = lobby;
       desiredRoom = lobby.code;
-      isHost = lobby.hostId === clientId || !lobby.hostId;
       renderLobbyList();
       // host must click Start Game to actually begin
       const hint = introOverlay.querySelector<HTMLElement>('#invite-hint');

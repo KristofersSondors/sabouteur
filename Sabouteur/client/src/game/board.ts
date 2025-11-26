@@ -16,8 +16,6 @@ export const BOARD_COLUMNS = 9;
 // Swap aspect so rectangles run horizontally (shorter board depth)
 export const TILE_WIDTH = 1.4;
 export const TILE_HEIGHT = 2.4;
-const BASE_TILE_SIZE = 1.6; // size the models were originally authored against
-
 const baseGeometry = new PlaneGeometry(TILE_WIDTH, TILE_HEIGHT);
 const hitMaterial = new MeshStandardMaterial({
   color: new Color('#11151c'),
@@ -40,21 +38,6 @@ const tileColor = (tile: BoardTile): Color => {
     default:
       return new Color('#333840');
   }
-};
-
-const resolvePathKey = (tile: BoardTile): string | undefined => {
-  if (tile.cardKey && PATH_MODEL_FILES[tile.cardKey]) return tile.cardKey;
-  const c = tile.connectors;
-  if (!c) return undefined;
-  const openSides = ['north', 'east', 'south', 'west'].filter((dir) => (c as any)[dir]);
-  if (openSides.length === 4) return 'cross';
-  if (openSides.length === 3) return 'tee';
-  if (openSides.length === 2) {
-    const isStraight = (c.north && c.south) || (c.east && c.west);
-    return isStraight ? 'straight' : 'turn';
-  }
-  if (openSides.length === 1) return 'deadend';
-  return undefined;
 };
 
 const pathTextureCache = new Map<string, CanvasTexture>();

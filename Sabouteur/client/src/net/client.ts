@@ -107,8 +107,13 @@ socket.on('newChat', (message) => {
 });
 
 socket.on('roundEnded', (payload) => {
-  useGameStore.getState().updateMetrics({ ...useGameStore.getState().metrics, round: payload.round });
-  useGameStore.getState().setBoard({ ...useGameStore.getState().board, winningTeam: payload.team });
+  const store = useGameStore.getState();
+  if (store.metrics) {
+    store.updateMetrics({ ...store.metrics, round: payload.round });
+  }
+  if (store.board) {
+    store.setBoard({ ...store.board, winningTeam: payload.team });
+  }
   window.dispatchEvent(new CustomEvent('round-ended', { detail: payload }));
 });
 
